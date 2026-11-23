@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>무장애 경로 추천 AI 서비스 - 휠체어 이용자를 위한 보행 경로 내비게이션</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Chart.js CDN (네트워크 연결 시 고품질 인터랙티브 차트 지원, 미연결 시 폴백 지원) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- 최상단 헤더 -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-icon">♿</div>
+      <div class="brand-titles">
+        <h1>
+          무장애 경로 추천 AI 서비스
+          <span class="badge-tag">AI 탐색 & 추론 융합</span>
+        </h1>
+        <p>교통약자(휠체어 이용자)의 안전한 이동권 보장을 위한 배리어프리 보행 경로 추천 시스템</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <div class="badge-legal">
+        <span>📜 법적 근거:</span>
+        <strong>「교통약자의 이동편의 증진법」 & 「장애인등편의법」</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- 페르소나 및 과제 연계 안내 배너 -->
+  <div class="persona-bar">
+    <div class="persona-info">
+      <span class="persona-tag">페르소나 모델링</span>
+      <strong>나상식 (26세, 휠체어 이용자)</strong>
+      <span class="persona-quote">"목적지에 닿는 가장 빠른 길이 있어도, 단 3cm의 턱이나 몇 개의 계단 때문에 완전히 되돌아 나와야 하는 일이 더 이상 없었으면 합니다."</span>
+    </div>
+    <div style="font-size: 11.5px; opacity: 0.85;">
+      <span>신성여자고등학교 2학년 인공지능 기초 AI 융합 프로젝트</span>
+    </div>
+  </div>
+
+  <!-- 메인 컨테이너 -->
+  <div class="app-container">
+
+    <!-- 좌측 컨트롤 사이드바 -->
+    <aside class="sidebar">
+      
+      <!-- 장소 선택 -->
+      <div class="control-group">
+        <label class="control-label" for="datasetSelect">
+          <span>📍</span> 대상 장소 선정 (실제 실측 데이터) <span class="req">*</span>
+        </label>
+        <select id="datasetSelect" class="select-input">
+          <option value="shinseong">신성여자고등학교 캠퍼스 & 진입 통학로 (실측)</option>
+          <option value="station_welfare">도심 환승역사 & 복지관 연계 보행로 (서울 혜화)</option>
+        </select>
+        <div id="locationInfo" style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+          신성여자고등학교 캠퍼스 & 진입 통학로 (제주 아봉로 445)
+        </div>
+      </div>
+
+      <!-- 출발지 및 목적지 선택 -->
+      <div class="control-group">
+        <label class="control-label" for="startNodeSelect">
+          <span>🟢</span> 출발지 선택 <span class="req">*</span>
+        </label>
+        <select id="startNodeSelect" class="select-input"></select>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="endNodeSelect">
+          <span>🟣</span> 목적지 선택 <span class="req">*</span>
+        </label>
+        <select id="endNodeSelect" class="select-input"></select>
+      </div>
+
+      <!-- 휠체어 및 이용자 유형 -->
+      <div class="control-group">
+        <label class="control-label">
+          <span>⚙️</span> 이동 수단 유형
+        </label>
+        <div class="radio-cards">
+          <div class="radio-card active" data-type="manual">
+            <span class="radio-icon">🧑‍🦽</span>
+            <span class="radio-title">수동 휠체어</span>
+          </div>
+          <div class="radio-card" data-type="electric">
+            <span class="radio-icon">👨‍🦼</span>
+            <span class="radio-title">전동 휠체어</span>
+          </div>
+          <div class="radio-card" data-type="elderly">
+            <span class="radio-icon">🦯</span>
+            <span class="radio-title">보행 약자</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 탐색 실행 버튼 -->
+      <button id="btnRunSearch" class="btn-primary">
+        <span>🔍</span> 무장애 경로 탐색 및 AI 추론 실행
+      </button>
+
+      <!-- 7단계 파이프라인 진행 상태 트래커 -->
+      <div class="pipeline-tracker">
+        <div class="pipeline-title">
+          <span>📊 7단계 데이터 파이프라인</span>
+          <span style="font-size: 11px; color: var(--primary);">자동 처리</span>
+        </div>
+        <div class="pipeline-steps">
+          <div class="step-item completed">
+            <span class="step-num">1</span>
+            <span>실제 자료 수집 (Raw Data)</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">2</span>
+            <span>핵심 속성 추출 (Features)</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">3</span>
+            <span>데이터 가공 (Graph Model)</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">4</span>
+            <span>추론: 구간 이동 적합성 판단</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">5</span>
+            <span>탐색: 최단 vs 무장애 경로 비교</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">6</span>
+            <span>최적 경로 추천 및 사유 생성</span>
+          </div>
+          <div class="step-item completed">
+            <span class="step-num">7</span>
+            <span>최단거리 경로와 지표 비교</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 우측 메인 콘텐츠 대시보드 -->
+    <main class="main-content">
+      
+      <!-- 네비게이션 탭 -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-map">
+          <span>🗺️</span> 경로 탐색 및 비교 대시보드
+        </button>
+        <button class="tab-btn" data-tab="tab-pipeline">
+          <span>🔄</span> 7단계 데이터 흐름 상세 보기
+        </button>
+        <button class="tab-btn" data-tab="tab-edges">
+          <span>📋</span> 구간별 AI 추론 세부표
+        </button>
+        <button class="tab-btn" data-tab="tab-legal">
+          <span>⚖️</span> 법적 공식 기준 & 연구 배경
+        </button>
+      </nav>
+
+      <!-- [탭 1] 경로 탐색 및 비교 대시보드 -->
+      <section id="tab-map" class="tab-pane active">
+        
+        <!-- 지도 카드 -->
+        <div class="map-card">
+          <div class="map-header">
+            <div class="map-title">
+              <span>📍</span> 보행 네트워크 인터랙티브 지도
+              <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">(드래그: 이동 | 휠: 확대/축소 | 노드 클릭: 출발/도착지 설정)</span>
+            </div>
+            <div class="map-legends">
+              <div class="legend-item"><span class="legend-color accessible"></span> 적합 구간</div>
+              <div class="legend-item"><span class="legend-color caution"></span> 주의 구간</div>
+              <div class="legend-item"><span class="legend-color disadvantaged"></span> 불리/계단(불가)</div>
+              <div class="legend-item"><span class="legend-color shortest"></span> 일반 최단경로</div>
+              <div class="legend-item"><span class="legend-color recommended"></span> AI 추천 무장애 경로</div>
+            </div>
+          </div>
+
+          <div class="map-canvas-container">
+            <canvas id="routeMapCanvas"></canvas>
+            <!-- 캔버스 컨트롤러 -->
+            <div class="map-controls-overlay">
+              <button id="btnZoomIn" class="map-btn" title="확대">+</button>
+              <button id="btnZoomOut" class="map-btn" title="축소">-</button>
+              <button id="btnResetView" class="map-btn" title="초기화">⟲</button>
+            </div>
+            <!-- 마우스 툴팁 -->
+            <div id="mapTooltip" class="canvas-tooltip"></div>
+          </div>
+        </div>
+
+        <!-- 핵심 지표 요약 카드 4종 -->
+        <div class="metric-grid">
+          
+          <!-- 거리 -->
+          <div class="metric-card dist">
+            <div class="metric-title">총 이동 거리 (AI 추천)</div>
+            <div class="metric-values">
+              <div id="metricDistRec" class="metric-rec-val">255m</div>
+              <div id="metricDistShort" class="metric-comp-val">최단경로: 190m (+65m)</div>
+            </div>
+            <span class="metric-badge badge-pass">안전 우회 경로</span>
+          </div>
+
+          <!-- 단차 -->
+          <div class="metric-card curb">
+            <div class="metric-title">최대 단차·턱 높이</div>
+            <div class="metric-values">
+              <div id="metricCurbRec" class="metric-rec-val">1.8cm</div>
+              <div id="metricCurbShort" class="metric-comp-val">최단경로: 16.5cm</div>
+            </div>
+            <span id="metricCurbBadge" class="metric-badge badge-pass">법적 기준(2cm) 적합</span>
+          </div>
+
+          <!-- 경사도 -->
+          <div class="metric-card slope">
+            <div class="metric-title">최고 경사도 (기울기)</div>
+            <div class="metric-values">
+              <div id="metricSlopeRec" class="metric-rec-val">4.8%</div>
+              <div id="metricSlopeShort" class="metric-comp-val">최단경로: 38%</div>
+            </div>
+            <span id="metricSlopeBadge" class="metric-badge badge-pass">법적 권장(5.56%) 적합</span>
+          </div>
+
+          <!-- 편의시설 및 통행성 -->
+          <div class="metric-card safety">
+            <div class="metric-title">활용 편의시설 & 통행성</div>
+            <div class="metric-values">
+              <div id="metricFacilityRec" class="metric-rec-val" style="font-size: 17px;">엘리베이터, 경사로</div>
+              <div id="metricFacilityShort" class="metric-comp-val">최단: 계단 통행불가</div>
+            </div>
+            <span id="metricPassBadge" class="metric-badge badge-pass">휠체어 안전 통행 가능</span>
+          </div>
+
+        </div>
+
+        <!-- AI 추천 사유 설명창 (Explainable AI - XAI) -->
+        <div class="xai-callout">
+          <div class="xai-header">
+            <span>💡</span> AI 경로 추천 사유 및 적합성 판정 근거 (XAI)
+          </div>
+          <div id="xaiSummaryText" class="xai-summary">
+            일반 최단 경로는 급경사 계단 구간이 포함되어 휠체어 진입이 불가능하지만, AI 추천 경로는 계단을 100% 우회하여 전 구간 자력 통행이 가능합니다.
+          </div>
+          <ul id="xaiBulletList" class="xai-bullet-list">
+            <li>최대 단차를 16.5cm에서 1.8cm로 낮추어 법적 적합 기준(2.0cm 이하)을 충족시켰습니다.</li>
+            <li>이동편의시설(승강기, 완만 경사로)을 연계 활용하여 휠체어 자력 통행성을 확보했습니다.</li>
+          </ul>
+        </div>
+
+        <!-- 일반 최단거리 vs AI 추천 무장애 경로 비교 테이블 -->
+        <div class="comparison-card">
+          <div class="card-title">
+            <span>⚖️</span> 일반 최단거리 경로 vs AI 추천 무장애 경로 종합 대조표
+          </div>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th style="width: 18%;">비교 항목</th>
+                <th style="width: 32%;">일반 최단거리 경로 (거리 우선)</th>
+                <th style="width: 35%;">AI 추천 무장애 경로 (안전·적합성 우선)</th>
+                <th style="width: 15%;">비교 및 개선 효과</th>
+              </tr>
+            </thead>
+            <tbody id="compTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- 시각화 차트 그리드 -->
+        <div class="charts-grid">
+          <div class="chart-box">
+            <div class="card-title">
+              <span>📊</span> 핵심 속성별 수치 대조 (막대 차트)
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chartComparison"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="card-title">
+              <span>📈</span> 경로 구간별 경사도 프로파일 비교
+            </div>
+            <div class="chart-canvas-wrapper">
+              <canvas id="chartProfile"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- [탭 2] 7단계 데이터 흐름 상세 보기 -->
+      <section id="tab-pipeline" class="tab-pane">
+        <div class="comparison-card">
+          <div class="card-title">
+            <span>🔄</span> 7단계 데이터 처리 및 AI 추론·탐색 파이프라인
+          </div>
+          <p style="font-size: 13.5px; color: var(--text-sub); margin-bottom: 16px;">
+            본 프로그램은 실제 현장 자료 수집부터 최종 비교 시각화까지의 7단계 데이터 흐름을 명확하고 체계적으로 거쳐 교통약자에게 가장 안전한 경로를 추천합니다.
+          </p>
+          <div id="pipelineFlowList" class="pipeline-flow-container"></div>
+        </div>
+      </section>
+
+      <!-- [탭 3] 구간별 AI 추론 세부표 -->
+      <section id="tab-edges" class="tab-pane">
+        <div class="comparison-card">
+          <div class="card-title">
+            <span>📋</span> 도로 구간(Edge)별 핵심 속성 수치 및 AI 추론 적합성 판정표
+          </div>
+          <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 14px;">
+            각 구간별 실측 데이터(거리, 단차, 경사도, 편의시설)를 법적 기준과 대조하여 도출한 적합성 등급 및 가중치(Impedance Weight) 세부 내역입니다.
+          </p>
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>구간 ID</th>
+                  <th>구간 명칭</th>
+                  <th>거리</th>
+                  <th>단차(턱)</th>
+                  <th>경사도</th>
+                  <th>계단 유무</th>
+                  <th>편의시설</th>
+                  <th>적합성 등급</th>
+                  <th>이동 가중치</th>
+                  <th>상세 추론 근거 (XAI)</th>
+                </tr>
+              </thead>
+              <tbody id="edgeTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- [탭 4] 법적 공식 기준 & 연구 배경 -->
+      <section id="tab-legal" class="tab-pane">
+        <div class="comparison-card">
+          <div class="card-title">
+            <span>⚖️</span> 관련 법령 공식 기준 및 연구 배경 (수행평가 인용 근거)
+          </div>
+          <div class="standards-grid">
+            
+            <div class="standard-card">
+              <h3>📜 단차 및 턱 높이 기준</h3>
+              <ul>
+                <li><strong>법적 근거:</strong> 「교통약자의 이동편의 증진법」 시행규칙 [별표 1]</li>
+                <li><strong>적합 기준 (2.0cm 이하):</strong> 횡단보도 접속부 등 턱낮춤 구간은 2cm 이하로 설치하여 휠체어 유효 통과 보장.</li>
+                <li><strong>주의 구간 (2.0cm 초과 ~ 5.0cm 이하):</strong> 휠체어 캐스터(앞바퀴) 걸림 및 전도 위험 발생, 감속 통과 필요.</li>
+                <li><strong>이동 불리 구간 (5.0cm 초과 ~ 15.0cm 이하):</strong> 수동휠체어 자력 등판 불가, 동행자 보조 필수.</li>
+                <li><strong>통행 불가 (15.0cm 초과 / 계단):</strong> 휠체어 단독 진입 원천 차단.</li>
+              </ul>
+            </div>
+
+            <div class="standard-card">
+              <h3>📐 보행로 및 경사로 기울기 기준</h3>
+              <ul>
+                <li><strong>법적 근거:</strong> 「장애인·노인·임산부 등의 편의증진 보장에 관한 법률」 시행규칙</li>
+                <li><strong>권장 기준 (1/18 이하, 약 5.56% 이하):</strong> 신축 편의시설 원칙 기준으로 수동휠체어 이용자가 체력 소모 없이 자력 주행 가능.</li>
+                <li><strong>완화 기준 (1/12 이하, 약 8.33% 이하):</strong> 지형상 부득이한 경우 완화 허용하는 한계 기준.</li>
+                <li><strong>주의/불리 구간 (8.33% 초과 ~ 12.0% 이하):</strong> 뒤로 밀림 위험이 높고 급격한 체력 소모 발생.</li>
+                <li><strong>급경사 위험 (12.0% 초과):</strong> 휠체어 전복 및 제동 실패 위험 극심.</li>
+              </ul>
+            </div>
+
+            <div class="standard-card">
+              <h3>🧠 AI 추론 엔진 (Inference Engine) 설계 원리</h3>
+              <ul>
+                <li><strong>규칙 기반 추론 (Rule-based Reasoning):</strong> 도로의 4대 속성을 법적 기준 규칙 베이스와 매칭.</li>
+                <li><strong>편의시설 보완 추론:</strong> 계단이 존재하더라도 승강기나 경사로가 병행 설치된 경우 '통행 가능'으로 논리적 판정 전환.</li>
+                <li><strong>이동 저항 비용(Impedance Weight) 산정:</strong> 임의 점수가 아닌 $W = \text{거리} \times \text{경사계수} + \text{단차페널티} - \text{편의시설가산}$의 과학적 수식 적용.</li>
+              </ul>
+            </div>
+
+            <div class="standard-card">
+              <h3>🔍 AI 탐색 알고리즘 (Search Algorithm) 설계 원리</h3>
+              <ul>
+                <li><strong>다익스트라(Dijkstra) 및 A* 알고리즘 활용:</strong> 상태 공간 그래프 $G=(V, E)$에서 최적 경로 도출.</li>
+                <li><strong>이원화 비교 탐색:</strong> 1) 비용 함수를 거리($w = \text{Distance}$)로 둔 최단거리 경로 vs 2) 비용 함수를 추론 가중치($w = \text{Impedance}$)로 둔 무장애 안전 경로 동시 탐색.</li>
+                <li><strong>설명 가능한 AI (XAI):</strong> 거리 손실(우회 거리)과 안전 획득(단차 제거, 계단 회피, 편의시설 활용)을 명확한 수치와 텍스트로 대조 제시.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- 스크립트 로드 -->
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
